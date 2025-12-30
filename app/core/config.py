@@ -85,7 +85,10 @@ class SupabaseSettings(BaseSettings):
         alias="SUPABASE_JWT_SECRET"
     )
 
-    # Database (Direct connection)
+    # Direct DATABASE_URL (for Render, Railway, etc.)
+    external_database_url: Optional[str] = Field(default=None, alias="DATABASE_URL")
+
+    # Database (Direct connection - for local Supabase)
     db_host: str = Field(default="localhost", alias="SUPABASE_DB_HOST")
     db_port: int = Field(default=5435, alias="SUPABASE_DB_PORT")
     db_name: str = Field(default="postgres", alias="SUPABASE_DB_NAME")
@@ -102,12 +105,32 @@ class SupabaseSettings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Get the async database URL."""
+        # If DATABASE_URL is provided (Render, Railway, etc.), use it
+        if self.external_database_url:
+            url = self.external_database_url
+            # Convert postgres:// to postgresql+asyncpg://
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://"):
+                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return url
+        # Otherwise, build from individual components (local Supabase)
         port = self.pooler_port if self.use_pooler else self.db_port
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{port}/{self.db_name}"
 
     @property
     def sync_database_url(self) -> str:
         """Get the sync database URL for Alembic."""
+        # If DATABASE_URL is provided, use it
+        if self.external_database_url:
+            url = self.external_database_url
+            # Ensure it's postgresql:// format for sync driver
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            elif url.startswith("postgresql+asyncpg://"):
+                url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+            return url
+        # Otherwise, build from individual components
         port = self.pooler_port if self.use_pooler else self.db_port
         return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{port}/{self.db_name}"
 

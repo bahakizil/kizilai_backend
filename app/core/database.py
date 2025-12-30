@@ -1,12 +1,18 @@
 """
 Database Configuration - Supabase PostgreSQL with SQLAlchemy Async
 """
+import os
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
 from app.models import Base
+
+# Determine SSL settings based on environment
+# Render and other cloud providers require SSL
+is_production = os.getenv("APP_ENV", "development") == "production"
+connect_args = {"ssl": "require"} if is_production else {"ssl": False}
 
 # Create async engine using Supabase database
 engine = create_async_engine(
@@ -15,7 +21,7 @@ engine = create_async_engine(
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,
-    connect_args={"ssl": False},  # Disable SSL for local development
+    connect_args=connect_args,
 )
 
 # Create async session factory

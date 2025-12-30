@@ -1,0 +1,47 @@
+databases:
+  - name: kizilai-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: 16
+
+services:
+  - type: web
+    name: kizilai-backend
+    runtime: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kizilai-db
+          property: connectionString
+
+      # Supabase (will use Render's PostgreSQL)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        generateValue: true
+
+      # App Settings
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "https://frontend-5hicpq2tx-bahas-projects-554ef70d.vercel.app"
+
+      # API Keys (set manually in Render dashboard)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: CARTESIA_API_KEY
+        sync: false
