@@ -1,9 +1,3 @@
-databases:
-  - name: kizilai-db
-    plan: free
-    region: frankfurt
-    postgresMajorVersion: 16
-
 services:
   - type: web
     name: kizilai-backend
@@ -14,21 +8,15 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
-      # Database
+      # Supabase.com Connection (set in Render Dashboard)
       - key: DATABASE_URL
-        fromDatabase:
-          name: kizilai-db
-          property: connectionString
-
-      # Supabase (will use Render's PostgreSQL)
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: SUPABASE_JWT_SECRET
-        generateValue: true
 
       # App Settings
       - key: APP_ENV
@@ -38,7 +26,7 @@ services:
       - key: CORS_ORIGINS
         value: "https://frontend-5hicpq2tx-bahas-projects-554ef70d.vercel.app"
 
-      # API Keys (set manually in Render dashboard)
+      # API Keys (set in Render Dashboard)
       - key: OPENAI_API_KEY
         sync: false
       - key: DEEPGRAM_API_KEY
